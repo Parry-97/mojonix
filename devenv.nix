@@ -46,14 +46,14 @@ in
   env.GREET = "devenv";
 
   # https://devenv.sh/packages/
-  packages = with pkgs; [
-    cudaPackages_12_9.cudatoolkit
-    cudaPackages_12_9.cudnn
-  ];
+  packages = [ pkgs.cudaPackages_12_9.cudatoolkit ];
 
-  env = {
-    CUDA_PATH = "${pkgs.cudaPackages_12_9.cudatoolkit}";
-  };
+  # CUDA toolkit location (used by some downstream tools) and ptxas path
+  # (REQUIRED for pre-Turing NVIDIA GPUs like the Pascal GTX 1060: Mojo's
+  # internal libnvptxcompiler was built against CUDA 13 which dropped
+  # pre-Turing support, so Mojo shells out to a system ptxas for sm_61).
+  env.CUDA_PATH = "${pkgs.cudaPackages_12_9.cudatoolkit}";
+  env.MODULAR_NVPTX_COMPILER_PATH = "${pkgs.cudaPackages_12_9.cudatoolkit}/bin/ptxas";
 
   # Nix-ld intercepts the uv-installed `mojo`/`mojo-lldb`/`mojo-lsp-server`
   # binaries (their ELF interpreter is /lib64/ld-linux-x86-64.so.2, symlinked
@@ -61,11 +61,14 @@ in
   # NIX_LD_LIBRARY_PATH. We prepend conda-forge ncurses (which exports the
   # required NCURSES6_5.0.19991023 ABI tag) and libbsd (also missing from the
   # system nix-ld set), then fall back to the system nix-ld library set
-  # (libstdc++, libgcc_s, libc, zlib, openssl, dbus, glib, curl).
+  # (libstdc++, libgcc_s, libc, zlib, openssl, dbus, glib, curl). Finally we
+  # append /run/opengl-driver/lib so the `mojo` compiler can find
+  # libnvidia-ml.so / libcuda.so at comptime to auto-detect the GPU arch.
   env.NIX_LD_LIBRARY_PATH = lib.concatStringsSep ":" [
     "${mojoNcurses}/lib"
     "${pkgs.libbsd}/lib"
     "/run/current-system/sw/share/nix-ld/lib"
+    "/run/opengl-driver/lib"
   ];
 
   # Binaries produced by `mojo build` embed glibc's ld.so directly (not
@@ -73,15 +76,18 @@ in
   # linked modular runtime (e.g. libKGENCompilerRTShared.so's need for
   # libstdc++.so.6) are NOT resolved via the executable's RUNPATH. They need
   # LD_LIBRARY_PATH to be set so glibc ld.so finds libstdc++ at load time.
+  # /run/opengl-driver/lib is appended so the built binary can load
+  # libcuda.so at runtime (for DeviceContext / host-side GPU calls).
   env.LD_LIBRARY_PATH = lib.makeLibraryPath [
     pkgs.stdenv.cc.cc.lib
     pkgs.cudaPackages_12_9.cudatoolkit
-  ];
+  ] + ":/run/opengl-driver/lib";
 
   # https://devenv.sh/languages/
   languages.python = {
     enable = true;
     uv.enable = true;
+    uv.sync.enable = true;
     venv.enable = true;
   };
 
