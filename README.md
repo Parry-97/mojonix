@@ -21,6 +21,10 @@ that Mojo's prebuilt wheels require. All of that lives declaratively in
 `devenv.nix`; the README does not restate it. CUDA 12.9 is pinned for NVIDIA GPU
 support, and pre-Turing cards (e.g. the Pascal GTX 1060) are supported via a
 system `ptxas` since Mojo's internal PTX compiler dropped pre-Turing.
+pygame-ce ships its own `libSDL2` that can't resolve the X11 client libs under
+nix-ld, so `devenv.nix` also puts those libs on the loader paths and forces
+`SDL_VIDEODRIVER=x11` (XWayland); without this the Game of Life window never
+appears — `pygame.display.set_mode()` silently succeeds on the `dummy` driver.
 
 ## Prerequisites
 
@@ -89,5 +93,5 @@ test failure looks like at runtime; `test_inc_one` passes.
 
 The CUDA / loader environment quirks
 (`CUDA_PATH`, `MODULAR_NVPTX_COMPILER_PATH`, `NIX_LD_LIBRARY_PATH`,
-`LD_LIBRARY_PATH`) are all handled by `devenv.nix`. See the comments there for
-the full rationale — the README does not restate them.
+`LD_LIBRARY_PATH`, `SDL_VIDEODRIVER`) are all handled by `devenv.nix`. See the
+comments there for the full rationale — the README does not restate them.
