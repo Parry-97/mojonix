@@ -67,9 +67,36 @@ in
   env.NIX_LD_LIBRARY_PATH = lib.concatStringsSep ":" [
     "${mojoNcurses}/lib"
     "${pkgs.libbsd}/lib"
+    "${pkgs.libxkbcommon}/lib"
+    "${pkgs.wayland}/lib"
+    "${pkgs.udev}/lib"
     "/run/current-system/sw/share/nix-ld/lib"
     "/run/opengl-driver/lib"
   ];
+
+  # SDL2 (bundled in the pygame-ce wheel) dlopens its display backend at
+  # runtime, not at link time, so it only "sees" backends whose client libs
+  # are resolvable on the loader path. The wayland client libs + libxkbcommon
+  # (above) let SDL's wayland backend load, and libudev (systemd-minimal-libs)
+  # supplies the udev_device_get_action symbol SDL's evdev/joystick probe
+  # references. We deliberately do NOT set env.SDL_VIDEODRIVER here: pinning it
+  # to "wayland" while DISPLAY=:0 is exported by the ambient session breaks
+  # SDL's backend selection; leaving it unset lets SDL autoprobe, which under
+  # niri (no X11 client libs present) lands on wayland.
+  #
+  # SDL2 2.32 normally dlopens libdecor-0.so.0 for Wayland window decorations.
+  # pygame-ce under the Mojo Python bridge in `mojo run` initializes that code
+  # path, then faults SDL's pg_set_mode; plain CPython skips libdecor entirely.
+  # We do NOT add libdecor to the loader path (verified: it does not help) but
+  # do set SDL_HINT_VIDEO_WAYLAND_ALLOW_LIBDECOR="0" so SDL draws XDG-shell
+  # toplevels directly, matching the working Python path (borderless window).
+  #
+  # Final wrinkle: `mojo run` installs Mojo's fault-printer signal handler,
+  # which misfires on SDL's legitimate wayland SIGSEGV and aborts with the
+  # misleading "execution crashed" stub; that handler is NOT installed in
+  # binaries produced by `mojo build`, so the working invocation is:
+  #   mojo build life.mojo -o life && ./life
+  env.SDL_VIDEO_WAYLAND_ALLOW_LIBDECOR = "0";
 
   # Binaries produced by `mojo build` embed glibc's ld.so directly (not
   # nix-ld) and use DT_RUNPATH (not DT_RPATH) — so transitive deps of the
@@ -78,10 +105,12 @@ in
   # LD_LIBRARY_PATH to be set so glibc ld.so finds libstdc++ at load time.
   # /run/opengl-driver/lib is appended so the built binary can load
   # libcuda.so at runtime (for DeviceContext / host-side GPU calls).
-  env.LD_LIBRARY_PATH = lib.makeLibraryPath [
-    pkgs.stdenv.cc.cc.lib
-    pkgs.cudaPackages_12_9.cudatoolkit
-  ] + ":/run/opengl-driver/lib";
+  env.LD_LIBRARY_PATH =
+    lib.makeLibraryPath [
+      pkgs.stdenv.cc.cc.lib
+      pkgs.cudaPackages_12_9.cudatoolkit
+    ]
+    + ":/run/opengl-driver/lib";
 
   # https://devenv.sh/languages/
   languages.python = {
@@ -105,7 +134,6 @@ in
   # https://devenv.sh/basics/
   enterShell = ''
     hello         # Run scripts directly
-    git --version # Use packages
   '';
 
   # https://devenv.sh/tasks/
@@ -117,7 +145,6 @@ in
   # https://devenv.sh/tests/
   enterTest = ''
     echo "Running tests"
-    git --version | grep --color=auto "${pkgs.git.version}"
   '';
 
   # https://devenv.sh/git-hooks/
