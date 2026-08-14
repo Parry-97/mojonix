@@ -3,28 +3,27 @@ from std import time
 from gridv1 import Grid
 from std.python import Python
 
+
 # def grid_str(rows: Int, cols: Int, grid: List[List[Int]]) -> String:
 def grid_str(grid: Grid) -> String:
     """
     When we pass a value to a Mojo function, the default behavior is that an argument is treated
-    as an immutable reference to the value. This is particularly useful for values like Lists, 
+    as an immutable reference to the value. This is particularly useful for values like `List`s,
     where copying them could be expensive. As we'll see later, we can specify different behavior
     by including an explicit argument convention.
     """
-    var str = String();
+    var str = String()
 
     for row in range(grid.rows):
-      for col in range(grid.cols):
-        if grid.data[row][col] == 1:
-          str += "*";
-        else:
-          str += " ";
+        for col in range(grid.cols):
+            if grid.data[row][col] == 1:
+                str += "*"
+            else:
+                str += " "
 
-      if row != grid.rows - 1:
-        str += "\n";
-    return str;
-
-
+        if row != grid.rows - 1:
+            str += "\n"
+    return str
 
 
 def run_display(
@@ -101,7 +100,6 @@ def main() raises:
 
 
 def initial_main() raises:
-
     # var name: String = input("Who are you? ")
     # var greeting: String = "Hi, " + name + "!"
     # print(greeting)
@@ -141,9 +139,9 @@ def initial_main() raises:
     #     [0, 0, 0, 0, 0, 0, 0, 0],
     # ]
 
-    #var start = Grid(num_rows, num_cols, glider^);
-    var start = Grid.random(num_rows, num_cols);
-    print(start.grid_str());
-    print(String(start));
+    # var start = Grid(num_rows, num_cols, glider^);
+    var start = Grid.random(num_rows, num_cols)
+    print(start.grid_str())
+    print(String(start))
     # print(grid_str(start));
     # print(grid_str(num_rows, num_cols, glider));

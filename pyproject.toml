@@ -10,6 +10,7 @@ requires-python = ">=3.14"
 dependencies = [
     "max[all]>=26.5.0",
     "mojo>=1.0.0",
+    "numpy>=2.5.2",
     "pygame-ce>=2.5.6,<3",
 ]
 

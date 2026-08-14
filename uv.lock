@@ -1026,6 +1026,7 @@ source = { editable = "." }
 dependencies = [
     { name = "max", extra = ["all"] },
     { name = "mojo" },
+    { name = "numpy" },
     { name = "pygame-ce" },
 ]
 
@@ -1033,6 +1034,7 @@ dependencies = [
 requires-dist = [
     { name = "max", extras = ["all"], specifier = ">=26.5.0" },
     { name = "mojo", specifier = ">=1.0.0" },
+    { name = "numpy", specifier = ">=2.5.2" },
     { name = "pygame-ce", specifier = ">=2.5.6,<3" },
 ]
 

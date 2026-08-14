@@ -74,12 +74,15 @@ in
   # nix-ld), then fall back to the system nix-ld set. /run/opengl-driver/lib
   # is appended so the `mojo` compiler can find libnvidia-ml.so / libcuda.so
   # at comptime for GPU arch auto-detection.
-  env.NIX_LD_LIBRARY_PATH = lib.concatStringsSep ":" ([
-    "${mojoNcurses}/lib"
-    "${pkgs.libbsd}/lib"
-    "/run/current-system/sw/share/nix-ld/lib"
-    "/run/opengl-driver/lib"
-  ] ++ (map (p: "${lib.getLib p}/lib") x11libs));
+  env.NIX_LD_LIBRARY_PATH = lib.concatStringsSep ":" (
+    [
+      "${mojoNcurses}/lib"
+      "${pkgs.libbsd}/lib"
+      "/run/current-system/sw/share/nix-ld/lib"
+      "/run/opengl-driver/lib"
+    ]
+    ++ (map (p: "${lib.getLib p}/lib") x11libs)
+  );
 
   # Binaries produced by `mojo build` embed glibc's ld.so directly (not
   # nix-ld) and use DT_RUNPATH (not DT_RPATH) — so transitive deps of the
@@ -89,10 +92,13 @@ in
   # /run/opengl-driver/lib is appended so the built binary can load
   # libcuda.so at runtime (for DeviceContext / host-side GPU calls).
   env.LD_LIBRARY_PATH =
-    lib.makeLibraryPath ([
-      pkgs.stdenv.cc.cc.lib
-      pkgs.cudaPackages_12_9.cudatoolkit
-    ] ++ x11libs)
+    lib.makeLibraryPath (
+      [
+        pkgs.stdenv.cc.cc.lib
+        pkgs.cudaPackages_12_9.cudatoolkit
+      ]
+      ++ x11libs
+    )
     + ":/run/opengl-driver/lib";
 
   # Force SDL to use the x11 driver (XWayland): the wayland driver segfaults
