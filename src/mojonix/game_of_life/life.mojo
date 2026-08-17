@@ -128,19 +128,19 @@ def initial_main() raises:
     var num_cols = 8
 
     # We can also nest list like this
-    # var glider: List[List[Int]] = [
-    #     [0, 1, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 1, 0, 0, 0, 0, 0],
-    #     [1, 1, 1, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0],
-    # ]
+    var glider: List[List[Int]] = [
+        [0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+    ]
 
-    # var start = Grid(num_rows, num_cols, glider^);
-    var start = Grid.random(num_rows, num_cols)
+    var start = Grid(num_rows, num_cols, glider^)
+    start = Grid.random(num_rows, num_cols)
     print(start.grid_str())
     print(String(start))
     # print(grid_str(start));
